@@ -40,7 +40,7 @@ data = {
 df = pd.DataFrame(data)
 YesNo = dict({'Yes': 1, 'No': 2})
 
-Yusdril_Rank = dict({
+Server_Rank = dict({
     'Unranked': [0, 0.5],
     'Rookie': [1, 1.5, 2, 2.5],
     'Novice': [3, 3.5, 4, 4.5, 5, 5.5],
@@ -83,7 +83,7 @@ Yusdril_Rank = dict({
     'Grand Master': [106, 106.5, 107, 107.5, 108, 108.5, 109, 109.5]
 })
 
-Yusdril_Class = dict({
+Server_Class = dict({
     1: 'Artificer',
     2: 'Barbarian',
     3: 'Bard',
@@ -118,7 +118,7 @@ class DataFrameManip:
 
     async def dfplayerupdate(self, msg, charname, username, time, increment):
         global df
-        global Yusdril_Rank
+        global Server_Rank
         i = df[df['Character Name'] == charname].index
         badges = df.loc[i, 'Current Badges']
         float(badges)
@@ -129,7 +129,7 @@ class DataFrameManip:
         df.loc[i, 'Current Badges'] = new_badge_count
         df.loc[i, 'Time of logging'] = time
         df.loc[i, 'Badge Increment'] = increment
-        for key, value in Yusdril_Rank.items():
+        for key, value in Server_Rank.items():
             if float(new_badge_count) in value:
                 currentrank = key
                 break
@@ -294,8 +294,8 @@ async def register(ctx):
         return msg.author == ctx.author and msg.channel == ctx.channel
 
     msg = await client.wait_for('message', check=check)
-    if int(msg.content) in Yusdril_Class:
-        class_name = Yusdril_Class[int(msg.content)]
+    if int(msg.content) in Server_Class:
+        class_name = Server_Class[int(msg.content)]
     else:
         await ctx.send('Bad Input')
         return
@@ -344,8 +344,8 @@ async def register(ctx):
     # await ctx.send(badges)
 
     counter = 0
-    for keys in Yusdril_Rank.keys():
-        temp_list = Yusdril_Rank[keys]
+    for keys in Server_Rank.keys():
+        temp_list = Server_Rank[keys]
         if float(badges) in temp_list:
             rank = keys
             # await ctx.send(rank)
