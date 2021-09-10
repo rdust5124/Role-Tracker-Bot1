@@ -9,11 +9,11 @@ from discord.utils import get
 from discord.ext.commands import cooldown, BucketType, bot
 from datetime import date, datetime
 import gspread
-
+from df2gspread import df2gspread as d2g
 
 __all__ = [
     'discord', 'asyncio', 'pandas', 'commands', 'cooldown', 'BucketType', 'os',
-    'bot', 'datetime', 'date', 'ctx', 'get', 'gspread']
+    'bot', 'datetime', 'date', 'ctx', 'get', 'gspread', 'd2g']
 
 client = commands.Bot(command_prefix='>', case_insensitive=True)
 
@@ -21,7 +21,8 @@ client = commands.Bot(command_prefix='>', case_insensitive=True)
 @client.event
 async def on_ready():
     print('Bot is ready')
-
+    #channel = client.get_channel(877880333276704810)
+    #await channel.send('hello')
 
 
 my_secret10 = os.environ['client_x509_cert_url']
@@ -59,7 +60,7 @@ credentials = {
 gc = gspread.service_account_from_dict(credentials)
 rank_sheet = gc.open_by_url("https://docs.google.com/spreadsheets/d/1_mSS8NEvYuSBcL23OZ13Nf9Mw8PFwdECctqZEf78Hd0/edit?usp=sharing")
 
-
+spreadsheet_key = '1_mSS8NEvYuSBcL23OZ13Nf9Mw8PFwdECctqZEf78Hd0'
 
 #    channel = client.get_channel(877880333276704810)
 #    await channel.send('hello')
@@ -589,6 +590,20 @@ async def dmshow(ctx):
         if isinstance(error, commands.errors.BadArgument):
             await ctx.send('Bad input', delete_after=20)
 
+@client.command()
+@commands.cooldown(1, 600, commands.BucketType.user)
+@commands.has_any_role("DM - West March", "Trial DM - West March", "Head DM - West March", "Owner", "Administrator", "Moderator", "DM - Campaigns")
+async def update_sheet(ctx):
+  if ctx.message.author == client.user:
+        return
+  global df
+  for key, values in Server_Class.items():
+    worksheet_temp = rank_sheet.worksheet(values)
+    dataframe_temp = pd.DataFrame(df.loc[df['Main class'] == values])
+    d2g.upload(dataframe_temp,  spreadsheet_key, values, credentials=credentials, row_names=True)
+
+    #print(dataframe_temp)
+  await ctx.send("Sheet Updated!")
 
 my_secret11 = os.environ['TOKEN']
 client.run(my_secret11)
