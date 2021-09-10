@@ -10,6 +10,7 @@ from discord.ext.commands import cooldown, BucketType, bot
 from datetime import date, datetime
 import gspread
 from df2gspread import df2gspread as d2g
+import gspread_dataframe as gd
 
 __all__ = [
     'discord', 'asyncio', 'pandas', 'commands', 'cooldown', 'BucketType', 'os',
@@ -591,17 +592,18 @@ async def dmshow(ctx):
             await ctx.send('Bad input', delete_after=20)
 
 @client.command()
-@commands.cooldown(1, 600, commands.BucketType.user)
+@commands.cooldown(1, 300, commands.BucketType.user)
 @commands.has_any_role("DM - West March", "Trial DM - West March", "Head DM - West March", "Owner", "Administrator", "Moderator", "DM - Campaigns")
-async def update_sheet(ctx):
+async def usheet(ctx):
   if ctx.message.author == client.user:
         return
   global df
   for key, values in Server_Class.items():
     worksheet_temp = rank_sheet.worksheet(values)
     dataframe_temp = pd.DataFrame(df.loc[df['Main class'] == values])
-    d2g.upload(dataframe_temp,  spreadsheet_key, values, credentials=credentials, row_names=True)
-
+    #d2g.upload(dataframe_temp,  spreadsheet_key, values, credentials=credentials, row_names=True)
+    worksheet_temp.clear()
+    gd.set_with_dataframe(worksheet= worksheet_temp,dataframe=dataframe_temp,include_index=False,include_column_header=True,resize=True)
     #print(dataframe_temp)
   await ctx.send("Sheet Updated!")
 
