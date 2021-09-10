@@ -8,11 +8,12 @@ from discord.ext import commands
 from discord.utils import get
 from discord.ext.commands import cooldown, BucketType, bot
 from datetime import date, datetime
+import gspread
+
 
 __all__ = [
     'discord', 'asyncio', 'pandas', 'commands', 'cooldown', 'BucketType', 'os',
-    'bot', 'datetime', 'date', 'ctx', 'get'
-]
+    'bot', 'datetime', 'date', 'ctx', 'get', 'gspread']
 
 client = commands.Bot(command_prefix='>', case_insensitive=True)
 
@@ -20,6 +21,44 @@ client = commands.Bot(command_prefix='>', case_insensitive=True)
 @client.event
 async def on_ready():
     print('Bot is ready')
+
+
+
+my_secret10 = os.environ['client_x509_cert_url']
+
+my_secret9 = os.environ['auth_provider_x509_cert_url']
+
+my_secret8 = os.environ['token_uri']
+
+my_secret7 = os.environ['auth_uri']
+
+my_secret6 = os.environ['client_id']
+
+my_secret5 = os.environ['client_email']
+
+my_secret4 = os.environ['private_key']
+
+my_secret3 = os.environ['private_key_id']
+
+my_secret2 = os.environ['project_id']
+
+my_secret1 = os.environ['type']
+
+
+credentials = {
+    "type": my_secret1,
+    "project_id": my_secret2,
+    "private_key_id": my_secret3,
+    "private_key": my_secret4,
+    "client_email": my_secret5,
+    "client_id": my_secret6,
+    "auth_uri": my_secret7, "token_uri": my_secret8, "auth_provider_x509_cert_url": my_secret9, "client_x509_cert_url": my_secret10
+}
+
+
+gc = gspread.service_account_from_dict(credentials)
+rank_sheet = gc.open_by_url("https://docs.google.com/spreadsheets/d/1_mSS8NEvYuSBcL23OZ13Nf9Mw8PFwdECctqZEf78Hd0/edit?usp=sharing")
+
 
 
 #    channel = client.get_channel(877880333276704810)
@@ -100,6 +139,15 @@ Server_Class = dict({
     13: 'Wizard',
     14: 'Homebrew'
 })
+
+Level_up_roles = {'Unranked', 'Rookie', 'Novice', 'Apprentice', 'Adventurer', 'Journeyman', 'Veteran', 'Guardian', 'Champion', 'Master'}
+
+DM_roles = {"DM - West March", "Trial DM - West March", "Head DM - West March", "Owner", "Administrator"}
+
+for key, values in Server_Class.items():
+    worksheet_temp = rank_sheet.worksheet(values)
+    df_temp = pd.DataFrame(worksheet_temp.get_all_records())
+    df = pd.concat([df, df_temp], ignore_index=True)
 
 
 class DataFrameManip:
@@ -236,17 +284,15 @@ class DataFrameManip:
 
         await msg.channel.send(embed=em)
 
-    # async def check_role_priviledge(self, msg):
-
-    # @commands.Bot(pass_context=True)
     async def grant_role(self, msg, rankname):
+        if 'High' in rankname:
+            rankname = rankname.replace('High ', "")
         role = discord.utils.get(msg.guild.roles, name=str(rankname))
         await msg.author.add_roles(role)
         return
 
-
 @client.command()
-@commands.cooldown(1, 3, commands.BucketType.user)
+@commands.cooldown(1, 30, commands.BucketType.user)
 async def register(ctx):
     if ctx.message.author == client.user:
         return
@@ -390,6 +436,7 @@ async def update(ctx):
 
 
 @client.command()
+@commands.has_any_role("DM - West March", "Trial DM - West March", "Head DM - West March", "Owner", "Administrator", "Moderator", "DM - Campaigns")
 @commands.cooldown(1, 30, commands.BucketType.user)
 async def dmupdate(ctx):
     # global df
@@ -451,6 +498,7 @@ async def dmupdate(ctx):
 
 
 @client.command()
+@commands.has_any_role("DM - West March", "Trial DM - West March", "Head DM - West March", "Owner", "Administrator", "Moderator", "DM - Campaigns")
 async def dmremove(ctx):
     #   global df
 
@@ -519,6 +567,7 @@ async def show(ctx):
 
 @client.command()
 @commands.cooldown(1, 5, commands.BucketType.user)
+@commands.has_any_role("DM - West March", "Trial DM - West March", "Head DM - West March", "Owner", "Administrator", "Moderator", "DM - Campaigns")
 async def dmshow(ctx):
     # global df
 
@@ -540,5 +589,6 @@ async def dmshow(ctx):
         if isinstance(error, commands.errors.BadArgument):
             await ctx.send('Bad input', delete_after=20)
 
-my_secret = os.environ['TOKEN']
-client.run(my_secret)
+
+my_secret11 = os.environ['TOKEN']
+client.run(my_secret11)
