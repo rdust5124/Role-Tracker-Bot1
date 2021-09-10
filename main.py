@@ -38,6 +38,7 @@ data = {
 }
 
 df = pd.DataFrame(data)
+
 YesNo = dict({'Yes': 1, 'No': 2})
 
 Server_Rank = dict({
@@ -102,11 +103,11 @@ Server_Class = dict({
 
 
 class DataFrameManip:
-    async def dfdmupdate(self, msg, charname, class_name, multiclass,
+
+    async def dfdmupdate(self, msg, charname, multiclass,
                          multiname, currentrank, badges, time, increment):
         global df
         i = df[df['Character Name'] == charname].index
-        df.loc[i, 'Main Class'] = class_name
         df.loc[i, 'Multi_Class'] = multiclass
         df.loc[i, 'Multi-Class Names'] = multiname
         df.loc[i, 'Current Rank'] = currentrank
@@ -120,7 +121,7 @@ class DataFrameManip:
         global df
         global Server_Rank
         i = df[df['Character Name'] == charname].index
-        badges = df.loc[i, 'Current Badges']
+        badges = df.iloc[i]['Current Badges']
         float(badges)
         float(increment)
         df.loc[i, 'User Name'] = username
@@ -134,9 +135,9 @@ class DataFrameManip:
                 currentrank = key
                 break
             else:
-                currentrank = df.loc[i, 'Current Rank']
+                currentrank = df.iloc[i][ 'Current Rank']
 
-        dummy_string = df.loc[i, 'Current Rank']
+        dummy_string = df.iloc[i]['Current Rank']
 
         if dummy_string[0] is not currentrank:
             df.loc[i, 'Current Rank'] = currentrank
@@ -168,7 +169,7 @@ class DataFrameManip:
             'Time of logging': [time],
             'Badge Increment': [increment]
         })
-        df = pd.concat([series, df])
+        df = pd.concat([df, series], ignore_index=True)
         await DataFrameManip.grant_role(0, msg, currentrank)
         return
 
@@ -181,43 +182,34 @@ class DataFrameManip:
     async def dmsheet_show(self, msg, charname):
         global df
         i = df[df['Character Name'] == charname].index
+        dummy_series = []
         em = discord.Embed(title=f"Character Sheet:",
                            description=f"",
                            color=0xFFFFFF)
-        dummy_series = df.loc[i, 'Character Name']
-        em.add_field(name="Character Name:",
-                     value=dummy_series[0],
-                     inline=False)
-        dummy_series = df.loc[i, 'Main class']
-        em.add_field(name="Character Class:",
-                     value=dummy_series[0],
-                     inline=False)
-        dummy_series = df.loc[i, 'Multi-Class Names']
-        em.add_field(name="Multi class(es):",
-                     value=dummy_series[0],
-                     inline=False)
-        dummy_series = df.loc[i, 'Current Rank']
+        dummy_series = df.iloc[i]['Character Name'].values
+        # await msg.channel.send(dummy_series)
+        em.add_field(name="Character Name:", value=dummy_series[0] , inline=False)
+        dummy_series = df.iloc[i]['Main class'].values
+        em.add_field(name="Character Class:", value=dummy_series[0], inline=False)
+        dummy_series = df.iloc[i]['Multi-Class Names'].values
+        em.add_field(name="Multi class(es):", value=dummy_series[0], inline=False)
+        dummy_series = df.iloc[i]['Current Rank'].values
         em.add_field(name="Current Rank:", value=dummy_series[0], inline=False)
-        dummy_series = df.loc[i, 'Current Badges']
+        dummy_series = df.iloc[i]['Current Badges'].values
         em.add_field(name="Total Badges:", value=dummy_series[0], inline=False)
-        dummy_series = df.loc[i, 'Time of logging']
-        em.add_field(name="Last modified:",
-                     value=dummy_series[0],
-                     inline=False)
-        dummy_series = df.loc[i, 'Badge Increment']
-        em.add_field(name="Last increase of badges:",
-                     value=dummy_series[0],
-                     inline=False)
-        dummy_series = df.loc[i, 'User Name']
-        em.add_field(name="Character belongs to:",
-                     value=dummy_series[0],
-                     inline=False)
+        dummy_series = df.iloc[i]['Time of logging'].values
+        em.add_field(name="Last modified:", value=dummy_series[0], inline=False)
+        dummy_series = df.iloc[i]['Badge Increment'].values
+        em.add_field(name="Last increase of badges:", value=dummy_series[0], inline=False)
+        dummy_series = df.iloc[i]['User Name'].values
+        em.add_field(name="Character belongs to:", value=dummy_series[0], inline=False)
         await msg.channel.send(embed=em)
 
     async def check_user_priviledge(self, msg, charname):
         global df
         i = df[df['Character Name'] == charname].index
-        # await msg.channel.send(df.loc[i, 'User Name'])
+        # await msg.channel.send(df)
+        # await msg.channel.send(df.iloc[i][ 'User Name'])
         dummy_series = df.loc[i, 'User Name']
         if msg.author == dummy_series[0]:
             check = 1
@@ -228,37 +220,25 @@ class DataFrameManip:
     async def sheet_show(self, msg, charname):
         global df
         i = df[df['Character Name'] == charname].index
-        em = discord.Embed(title=f"Character Sheet:",
-                           description=f"",
-                           color=0xFFFFFF)
-        dummy_series = df.loc[i, 'Character Name']
-        em.add_field(name="Character Name:",
-                     value=dummy_series[0],
-                     inline=False)
-        dummy_series = df.loc[i, 'Main class']
-        em.add_field(name="Character Class:",
-                     value=dummy_series[0],
-                     inline=False)
-        dummy_series = df.loc[i, 'Multi-Class Names']
-        em.add_field(name="Multi class(es):",
-                     value=dummy_series[0],
-                     inline=False)
-        dummy_series = df.loc[i, 'Current Rank']
+        em = discord.Embed(title=f"Character Sheet:", description=f"", color=0xFFFFFF)
+        dummy_series = df.iloc[i]['Character Name'].values
+        em.add_field(name="Character Name:", value=dummy_series[0], inline=False)
+        dummy_series = df.iloc[i]['Main class'].values
+        em.add_field(name="Character Class:", value=dummy_series[0], inline=False)
+        dummy_series = df.iloc[i]['Multi-Class Names'].values
+        em.add_field(name="Multi class(es):", value=dummy_series[0], inline=False)
+        dummy_series = df.iloc[i]['Current Rank'].values
         em.add_field(name="Current Rank:", value=dummy_series[0], inline=False)
-        dummy_series = df.loc[i, 'Current Badges']
-        em.add_field(name="Current Badges:",
-                     value=dummy_series[0],
-                     inline=False)
-        dummy_series = df.loc[i, 'Badge Increment']
-        em.add_field(name="Last increase of badges:",
-                     value=dummy_series[0],
-                     inline=False)
+        dummy_series = df.iloc[i]['Current Badges'].values
+        em.add_field(name="Current Badges:", value=dummy_series[0], inline=False)
+        dummy_series = df.iloc[i]['Badge Increment'].values
+        em.add_field(name="Last increase of badges:", value=dummy_series[0], inline=False)
 
         await msg.channel.send(embed=em)
 
     # async def check_role_priviledge(self, msg):
 
-    #@commands.Bot(pass_context=True)
+    # @commands.Bot(pass_context=True)
     async def grant_role(self, msg, rankname):
         role = discord.utils.get(msg.guild.roles, name=str(rankname))
         await msg.author.add_roles(role)
@@ -353,8 +333,7 @@ async def register(ctx):
     if counter != 1:
         rank = 'None'
 
-    await DataFrameManip.addcharacter(0, msg, charname, class_name, multiclass,
-                                      multiname, username, rank, badges, time)
+    await DataFrameManip.addcharacter(0, msg, charname, class_name, multiclass, multiname, username, rank, badges, time)
 
     @register.error
     async def register_error(ctx, error):
@@ -426,14 +405,6 @@ async def dmupdate(ctx):
     charname = msg.content
     time = msg.created_at
 
-    await ctx.send('Enter main class of character', delete_after=20)
-
-    def check(msg):
-        return msg.author == ctx.author and msg.channel == ctx.channel
-
-    msg = await client.wait_for('message', check=check)
-    class_name = msg.content
-
     await ctx.send('Is character multi-class?', delete_after=20)
 
     def check(msg):
@@ -467,7 +438,7 @@ async def dmupdate(ctx):
     badges = msg.content
     increment = 0.0
 
-    await DataFrameManip.dfdmupdate(0, msg, charname, class_name, multiclass,
+    await DataFrameManip.dfdmupdate(0, msg, charname, multiclass,
                                     multiname, currentrank, badges, time,
                                     increment)
 
@@ -536,6 +507,7 @@ async def show(ctx):
     else:
         await ctx.send('This character does not belong to you',
                        delete_after=20)
+    # await ctx.send(df)
 
     @show.error
     async def show_error(ctx, error):
@@ -567,7 +539,6 @@ async def dmshow(ctx):
             await ctx.send('Wait for {error.retry_after:.2f}', delete_after=20)
         if isinstance(error, commands.errors.BadArgument):
             await ctx.send('Bad input', delete_after=20)
-
 
 my_secret = os.environ['TOKEN']
 client.run(my_secret)
