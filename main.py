@@ -15,7 +15,9 @@ from keep_alive import keep_alive
 
 __all__ = [
     'discord', 'asyncio', 'pandas', 'commands', 'cooldown', 'BucketType', 'os',
-    'bot', 'datetime', 'date', 'ctx', 'get', 'gspread', 'd2g', 'gd', 'keep_alive']
+    'bot', 'datetime', 'date', 'ctx', 'get', 'gspread', 'd2g', 'gd',
+    'keep_alive'
+]
 
 client = commands.Bot(command_prefix='>', case_insensitive=True)
 
@@ -47,7 +49,6 @@ my_secret2 = os.environ['project_id']
 
 my_secret1 = os.environ['type']
 
-
 credentials = {
     "type": my_secret1,
     "project_id": my_secret2,
@@ -55,12 +56,16 @@ credentials = {
     "private_key": my_secret4,
     "client_email": my_secret5,
     "client_id": my_secret6,
-    "auth_uri": my_secret7, "token_uri": my_secret8, "auth_provider_x509_cert_url": my_secret9, "client_x509_cert_url": my_secret10
+    "auth_uri": my_secret7,
+    "token_uri": my_secret8,
+    "auth_provider_x509_cert_url": my_secret9,
+    "client_x509_cert_url": my_secret10
 }
 
-
 gc = gspread.service_account_from_dict(credentials)
-rank_sheet = gc.open_by_url("https://docs.google.com/spreadsheets/d/1_mSS8NEvYuSBcL23OZ13Nf9Mw8PFwdECctqZEf78Hd0/edit?usp=sharing")
+rank_sheet = gc.open_by_url(
+    "https://docs.google.com/spreadsheets/d/1_mSS8NEvYuSBcL23OZ13Nf9Mw8PFwdECctqZEf78Hd0/edit?usp=sharing"
+)
 
 spreadsheet_key = '1_mSS8NEvYuSBcL23OZ13Nf9Mw8PFwdECctqZEf78Hd0'
 
@@ -76,7 +81,10 @@ data = {
     'Current Rank': [],
     'Current Badges': [],
     'Time of logging': [],
-    'Badge Increment': [], 'User Id': [],'Which quest': [], 'Awarding DM name': []
+    'Badge Increment': [],
+    'User Id': [],
+    'Which quest': [],
+    'Awarding DM name': []
 }
 
 df = pd.DataFrame(data)
@@ -126,7 +134,8 @@ Server_Rank = dict({
     'Grand Master': [106, 106.5, 107, 107.5, 108, 108.5, 109, 109.5]
 })
 
-rank_dict = dict({1: 'Unranked',
+rank_dict = dict({
+    1: 'Unranked',
     2: 'Rookie',
     3: 'Novice',
     4: 'High Novice',
@@ -144,7 +153,8 @@ rank_dict = dict({1: 'Unranked',
     16: 'High Champion',
     17: 'Master',
     18: 'High Master',
-    19: 'Grand Master'})
+    19: 'Grand Master'
+})
 
 Server_Class = dict({
     1: 'Artificer',
@@ -163,9 +173,15 @@ Server_Class = dict({
     14: 'Homebrew'
 })
 
-Level_up_roles = {'Unranked', 'Rookie', 'Novice', 'Apprentice', 'Adventurer', 'Journeyman', 'Veteran', 'Guardian', 'Champion', 'Master'}
+Level_up_roles = {
+    'Unranked', 'Rookie', 'Novice', 'Apprentice', 'Adventurer', 'Journeyman',
+    'Veteran', 'Guardian', 'Champion', 'Master'
+}
 
-DM_roles = {"DM - West March", "Trial DM - West March", "Head DM - West March", "Owner", "Administrator"}
+DM_roles = {
+    "DM - West March", "Trial DM - West March", "Head DM - West March",
+    "Owner", "Administrator"
+}
 
 for key, values in Server_Class.items():
     worksheet_temp = rank_sheet.worksheet(values)
@@ -174,9 +190,8 @@ for key, values in Server_Class.items():
 
 
 class DataFrameManip:
-
-    async def dfdmupdate(self, msg, charname, multiclass,
-                         multiname, currentrank, badges, time, increment):
+    async def dfdmupdate(self, msg, charname, multiclass, multiname,
+                         currentrank, badges, time, increment):
         global df
         i = df[df['Character Name'] == charname].index
         df.loc[i, 'Multi_Class'] = multiclass
@@ -188,7 +203,8 @@ class DataFrameManip:
         await DataFrameManip.dmsheet_show(0, msg, charname)
         return
 
-    async def dfplayerupdate(self, msg, charname, username, time, quest, dmname, increment):
+    async def dfplayerupdate(self, msg, charname, username, time, quest,
+                             dmname, increment):
         global df
         global Server_Rank
         i = df[df['Character Name'] == charname].index
@@ -208,9 +224,9 @@ class DataFrameManip:
                 currentrank = key
                 break
             else:
-                currentrank = df.iloc[i][ 'Current Rank']
+                currentrank = df.iloc[i]['Current Rank']
 
-        dummy_string = df.iloc[i]['Current Rank']
+        dummy_string = df.iloc[i]['Current Rank'].values
 
         if dummy_string[0] is not currentrank:
             df.loc[i, 'Current Rank'] = currentrank
@@ -219,7 +235,20 @@ class DataFrameManip:
         await DataFrameManip.sheet_show(0, msg, charname)
         return
 
-    async def addcharacter(self, msg, charname, class_name, multiclass, multiname, username, currentrank, badges,time, userid, quest='NA',dmname='NA', increment=0.0):
+    async def addcharacter(self,
+                           msg,
+                           charname,
+                           class_name,
+                           multiclass,
+                           multiname,
+                           username,
+                           currentrank,
+                           badges,
+                           time,
+                           userid,
+                           quest='NA',
+                           dmname='NA',
+                           increment=0.0):
         global df
         series = pd.DataFrame({
             'Character Name': [charname],
@@ -237,6 +266,7 @@ class DataFrameManip:
         })
         df = pd.concat([df, series], ignore_index=True)
         await DataFrameManip.grant_role(0, msg, currentrank)
+        await DataFrameManip.sheet_show(0, msg, charname)
         return
 
     async def removecharacter(self, charname):
@@ -254,22 +284,34 @@ class DataFrameManip:
                            color=0xFFFFFF)
         dummy_series = df.iloc[i]['Character Name'].values
         # await msg.channel.send(dummy_series)
-        em.add_field(name="Character Name:", value=dummy_series[0] , inline=False)
+        em.add_field(name="Character Name:",
+                     value=dummy_series[0],
+                     inline=False)
         dummy_series = df.iloc[i]['Main class'].values
-        em.add_field(name="Character Class:", value=dummy_series[0], inline=False)
+        em.add_field(name="Character Class:",
+                     value=dummy_series[0],
+                     inline=False)
         dummy_series = df.iloc[i]['Multi-Class Names'].values
-        em.add_field(name="Multi class(es):", value=dummy_series[0], inline=False)
+        em.add_field(name="Multi class(es):",
+                     value=dummy_series[0],
+                     inline=False)
         dummy_series = df.iloc[i]['Current Rank'].values
         em.add_field(name="Current Rank:", value=dummy_series[0], inline=False)
         dummy_series = df.iloc[i]['Current Badges'].values
         em.add_field(name="Total Badges:", value=dummy_series[0], inline=False)
         dummy_series = df.iloc[i]['Time of logging'].values
-        em.add_field(name="Last modified:", value=dummy_series[0], inline=False)
+        em.add_field(name="Last modified:",
+                     value=dummy_series[0],
+                     inline=False)
         dummy_series = df.iloc[i]['Badge Increment'].values
-        em.add_field(name="Last increase of badges:", value=dummy_series[0], inline=False)
+        em.add_field(name="Last increase of badges:",
+                     value=dummy_series[0],
+                     inline=False)
         dummy_series = df.iloc[i]['User Name'].values
-        em.add_field(name="Character belongs to:", value=dummy_series[0], inline=False)
-        dummy_series = df.iloc[i]['Quest'].values
+        em.add_field(name="Character belongs to:",
+                     value=dummy_series[0],
+                     inline=False)
+        dummy_series = df.iloc[i]['Which quest'].values
         em.add_field(name="Last Quest:", value=dummy_series[0], inline=False)
         dummy_series = df.iloc[i]['Awarding DM name'].values
         em.add_field(name="Awarded by:", value=dummy_series[0], inline=False)
@@ -294,19 +336,31 @@ class DataFrameManip:
     async def sheet_show(self, msg, charname):
         global df
         i = df[df['Character Name'] == charname].index
-        em = discord.Embed(title=f"Character Sheet:", description=f"", color=0xFFFFFF)
+        em = discord.Embed(title=f"Character Sheet:",
+                           description=f"",
+                           color=0xFFFFFF)
         dummy_series = df.iloc[i]['Character Name'].values
-        em.add_field(name="Character Name:", value=dummy_series[0], inline=False)
+        em.add_field(name="Character Name:",
+                     value=dummy_series[0],
+                     inline=False)
         dummy_series = df.iloc[i]['Main class'].values
-        em.add_field(name="Character Class:", value=dummy_series[0], inline=False)
+        em.add_field(name="Character Class:",
+                     value=dummy_series[0],
+                     inline=False)
         dummy_series = df.iloc[i]['Multi-Class Names'].values
-        em.add_field(name="Multi class(es):", value=dummy_series[0], inline=False)
+        em.add_field(name="Multi class(es):",
+                     value=dummy_series[0],
+                     inline=False)
         dummy_series = df.iloc[i]['Current Rank'].values
         em.add_field(name="Current Rank:", value=dummy_series[0], inline=False)
         dummy_series = df.iloc[i]['Current Badges'].values
-        em.add_field(name="Current Badges:", value=dummy_series[0], inline=False)
+        em.add_field(name="Current Badges:",
+                     value=dummy_series[0],
+                     inline=False)
         dummy_series = df.iloc[i]['Badge Increment'].values
-        em.add_field(name="Last increase of badges:", value=dummy_series[0], inline=False)
+        em.add_field(name="Last increase of badges:",
+                     value=dummy_series[0],
+                     inline=False)
 
         await msg.channel.send(embed=em)
 
@@ -316,6 +370,7 @@ class DataFrameManip:
         role = discord.utils.get(msg.guild.roles, name=str(rankname))
         await msg.author.add_roles(role)
         return
+
 
 @client.command()
 @commands.cooldown(1, 30, commands.BucketType.user)
@@ -406,7 +461,9 @@ async def register(ctx):
     if counter != 1:
         rank = 'None'
 
-    await DataFrameManip.addcharacter(0, msg, charname, class_name, multiclass, multiname, username, rank, badges, time, userid)
+    await DataFrameManip.addcharacter(0, msg, charname, class_name, multiclass,
+                                      multiname, username, rank, badges, time,
+                                      userid)
 
     @register.error
     async def register_error(ctx, error):
@@ -448,18 +505,22 @@ async def update(ctx):
         increment = abs(float(msg.content))
 
         await ctx.send('Name of Quest: ')
+
         def check(msg):
             return msg.author == ctx.author and msg.channel == ctx.channel
-        msg = await client.wait_for('message',check=check)
+
+        msg = await client.wait_for('message', check=check)
         quest = msg.content
 
         await ctx.send('Name of Awarding DM: ')
+
         def check(msg):
             return msg.author == ctx.author and msg.channel == ctx.channel
-        msg = await client.wait_for('message',check=check)
+
+        msg = await client.wait_for('message', check=check)
         dmname = msg.content
-        await DataFrameManip.dfplayerupdate(0, msg, charname, username, time, quest, dmname,
-                                            increment)
+        await DataFrameManip.dfplayerupdate(0, msg, charname, username, time,
+                                            quest, dmname, increment)
         await ctx.send('Character updated')
     else:
         await ctx.send('This character does not belong to you',
@@ -474,7 +535,9 @@ async def update(ctx):
 
 
 @client.command()
-@commands.has_any_role("DM - West March", "Trial DM - West March", "Head DM - West March", "Owner", "Administrator", "Moderator", "DM - Campaigns")
+@commands.has_any_role("DM - West March", "Trial DM - West March",
+                       "Head DM - West March", "Owner", "Administrator",
+                       "Moderator", "DM - Campaigns")
 @commands.cooldown(1, 30, commands.BucketType.user)
 async def dmupdate(ctx):
     # global df
@@ -490,37 +553,43 @@ async def dmupdate(ctx):
     charname = msg.content
     time = msg.created_at
 
-    await ctx.send('Is character multi-class?\n 1: Yes \n 2: No', delete_after=20)
+    await ctx.send('Is character multi-class?\n 1: Yes \n 2: No',
+                   delete_after=20)
 
     def check(msg):
         return msg.author == ctx.author and msg.channel == ctx.channel
 
     msg = await client.wait_for('message', check=check)
     if msg.content == 1:
-      multiclass = 'Yes'
-      await ctx.send('Enter secondary classes', delete_after=20)
-      def check(msg):
-        return msg.author == ctx.author and msg.channel == ctx.channel
-      msg = await client.wait_for('message', check=check)
-      multiname = msg.content
-    else:
-      multiname='None'
-      multiclass='No'
+        multiclass = 'Yes'
+        await ctx.send('Enter secondary classes', delete_after=20)
 
-    await ctx.send('Enter Current rank', delete_after=20)
-    em = discord.Embed(title=f"Enter Corresponding Number:", description=f"", color=0xFFFFFF)
-    em.add_field(name="Ranks", value=rank_dict , inline=False)
-    await ctx.send(em, delete_after=20)
+        def check(msg):
+            return msg.author == ctx.author and msg.channel == ctx.channel
+
+        msg = await client.wait_for('message', check=check)
+        multiname = msg.content
+    else:
+        multiname = 'None'
+        multiclass = 'No'
+
+    #await ctx.send('Enter Current rank', delete_after=20)
+    em = discord.Embed(
+        title=f'Enter Corresponding Number for current rank:',
+        description=
+        f'1: Unranked \n 2: Rookie \n 3: Novice \n 4: High Novice \n 5: Apprentice \n 6: High Apprentice \n 7: Adventurer \n 8: High Adventurer \n 9: Journeyman \n 10: High Journeyman \n 11: Veteran \n 12: High Veteran \n 13: Guardian \n 14: High Guardian \n 15: Champion \n 16: High Champion \n 17: Master \n 18: High Master \n 19: Grand Master',
+        color=0xFFFFFF)
+    await ctx.send(embed=em, delete_after=20)
+
     def check(msg):
         return msg.author == ctx.author and msg.channel == ctx.channel
 
     msg = await client.wait_for('message', check=check)
     i = msg.content
     currentrank = 'Unranked'
-    for keys in rank_dict:
-      if i == keys:
-        currentrank = rank_dict[i].values
-    
+    for key, value in rank_dict.items():
+        if int(i) == key:
+            currentrank = value
 
     await ctx.send('Enter Badge Count', delete_after=20)
 
@@ -531,9 +600,8 @@ async def dmupdate(ctx):
     badges = msg.content
     increment = 0.0
 
-    await DataFrameManip.dfdmupdate(0, msg, charname, multiclass,
-                                    multiname, currentrank, badges, time,
-                                    increment)
+    await DataFrameManip.dfdmupdate(0, msg, charname, multiclass, multiname,
+                                    currentrank, badges, time, increment)
 
     @dmupdate.error
     async def dmupdate_error(ctx, error):
@@ -544,7 +612,9 @@ async def dmupdate(ctx):
 
 
 @client.command()
-@commands.has_any_role("DM - West March", "Trial DM - West March", "Head DM - West March", "Owner", "Administrator", "Moderator", "DM - Campaigns")
+@commands.has_any_role("DM - West March", "Trial DM - West March",
+                       "Head DM - West March", "Owner", "Administrator",
+                       "Moderator", "DM - Campaigns")
 async def dmremove(ctx):
     #   global df
 
@@ -613,7 +683,9 @@ async def show(ctx):
 
 @client.command()
 @commands.cooldown(1, 5, commands.BucketType.user)
-@commands.has_any_role("DM - West March", "Trial DM - West March", "Head DM - West March", "Owner", "Administrator", "Moderator", "DM - Campaigns")
+@commands.has_any_role("DM - West March", "Trial DM - West March",
+                       "Head DM - West March", "Owner", "Administrator",
+                       "Moderator", "DM - Campaigns")
 async def dmshow(ctx):
     # global df
 
@@ -635,21 +707,29 @@ async def dmshow(ctx):
         if isinstance(error, commands.errors.BadArgument):
             await ctx.send('Bad input', delete_after=20)
 
+
 @client.command()
 @commands.cooldown(1, 300, commands.BucketType.user)
-@commands.has_any_role("DM - West March", "Trial DM - West March", "Head DM - West March", "Owner", "Administrator", "Moderator", "DM - Campaigns")
+@commands.has_any_role("DM - West March", "Trial DM - West March",
+                       "Head DM - West March", "Owner", "Administrator",
+                       "Moderator", "DM - Campaigns")
 async def usheet(ctx):
-  if ctx.message.author == client.user:
+    if ctx.message.author == client.user:
         return
-  global df
-  for key, values in Server_Class.items():
-    worksheet_temp = rank_sheet.worksheet(values)
-    dataframe_temp = pd.DataFrame(df.loc[df['Main class'] == values])
-    #d2g.upload(dataframe_temp,  spreadsheet_key, values, credentials=credentials, row_names=True)
-    worksheet_temp.clear()
-    gd.set_with_dataframe(worksheet= worksheet_temp,dataframe=dataframe_temp,include_index=False,include_column_header=True,resize=True)
-    #print(dataframe_temp)
-  await ctx.send("Sheet Updated!")
+    global df
+    for key, values in Server_Class.items():
+        worksheet_temp = rank_sheet.worksheet(values)
+        dataframe_temp = pd.DataFrame(df.loc[df['Main class'] == values])
+        #d2g.upload(dataframe_temp,  spreadsheet_key, values, credentials=credentials, row_names=True)
+        worksheet_temp.clear()
+        gd.set_with_dataframe(worksheet=worksheet_temp,
+                              dataframe=dataframe_temp,
+                              include_index=False,
+                              include_column_header=True,
+                              resize=True)
+        #print(dataframe_temp)
+    await ctx.send("Sheet Updated!")
+
 
 my_secret11 = os.environ['TOKEN']
 keep_alive()
