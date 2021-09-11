@@ -11,10 +11,11 @@ from datetime import date, datetime
 import gspread
 from df2gspread import df2gspread as d2g
 import gspread_dataframe as gd
+from keep_alive import keep_alive
 
 __all__ = [
     'discord', 'asyncio', 'pandas', 'commands', 'cooldown', 'BucketType', 'os',
-    'bot', 'datetime', 'date', 'ctx', 'get', 'gspread', 'd2g']
+    'bot', 'datetime', 'date', 'ctx', 'get', 'gspread', 'd2g', 'gd', 'keep_alive']
 
 client = commands.Bot(command_prefix='>', case_insensitive=True)
 
@@ -260,11 +261,15 @@ class DataFrameManip:
         i = df[df['Character Name'] == charname].index
         # await msg.channel.send(df)
         # await msg.channel.send(df.iloc[i][ 'User Name'])
-        dummy_series = df.loc[i, 'User Name']
-        if msg.author == dummy_series[0]:
+        dummy_series = df.iloc[i]['User Name'].values
+        #await msg.channel.send(dummy_series[0])
+        #await msg.channel.send(msg.author)
+        author = str(msg.author)
+        if author == dummy_series[0]:
             check = 1
         else:
             check = 0
+        #await msg.channel.send(check)
         return check
 
     async def sheet_show(self, msg, charname):
@@ -407,7 +412,7 @@ async def update(ctx):
 
     msg = await client.wait_for('message', check=check)
     chk = await DataFrameManip.check_user_priviledge(0, msg, msg.content)
-    # await ctx.send(chk)
+    #await ctx.send(chk)
     if chk == 1:
 
         charname = msg.content
@@ -608,4 +613,5 @@ async def usheet(ctx):
   await ctx.send("Sheet Updated!")
 
 my_secret11 = os.environ['TOKEN']
+keep_alive()
 client.run(my_secret11)
