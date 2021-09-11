@@ -730,6 +730,11 @@ async def usheet(ctx):
         #print(dataframe_temp)
     await ctx.send("Sheet Updated!")
 
+@client.command()
+async def help(ctx):
+  em=discord.Embed(title=f'To use this Bot:',description=f'(To register a new character, type >register and follow instructions. \n To view an existing character sheet, type >show and follow instructions.  \n To  update your badge count, type >update and follow instructions', color=0xFFFFFF)
+  await ctx.send(embed=em)
+
 
 my_secret11 = os.environ['TOKEN']
 keep_alive()
