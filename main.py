@@ -76,7 +76,7 @@ data = {
     'Current Rank': [],
     'Current Badges': [],
     'Time of logging': [],
-    'Badge Increment': []
+    'Badge Increment': [], 'User Id': [],'Which quest': [], 'Awarding DM name': []
 }
 
 df = pd.DataFrame(data)
@@ -126,6 +126,26 @@ Server_Rank = dict({
     'Grand Master': [106, 106.5, 107, 107.5, 108, 108.5, 109, 109.5]
 })
 
+rank_dict = dict({1: 'Unranked',
+    2: 'Rookie',
+    3: 'Novice',
+    4: 'High Novice',
+    5: 'Apprentice',
+    6: 'High Apprentice',
+    7: 'Adventurer',
+    8: 'High Adventurer',
+    9: 'Journeyman',
+    10: 'High Journeyman',
+    11: 'Veteran',
+    12: 'High Veteran',
+    13: 'Guardian',
+    14: 'High Guardian',
+    15: 'Champion',
+    16: 'High Champion',
+    17: 'Master',
+    18: 'High Master',
+    19: 'Grand Master'})
+
 Server_Class = dict({
     1: 'Artificer',
     2: 'Barbarian',
@@ -168,7 +188,7 @@ class DataFrameManip:
         await DataFrameManip.dmsheet_show(0, msg, charname)
         return
 
-    async def dfplayerupdate(self, msg, charname, username, time, increment):
+    async def dfplayerupdate(self, msg, charname, username, time, quest, dmname, increment):
         global df
         global Server_Rank
         i = df[df['Character Name'] == charname].index
@@ -181,6 +201,8 @@ class DataFrameManip:
         df.loc[i, 'Current Badges'] = new_badge_count
         df.loc[i, 'Time of logging'] = time
         df.loc[i, 'Badge Increment'] = increment
+        df.loc[i, 'Which quest'] = quest
+        df.loc[i, 'Awarding DM name'] = dmname
         for key, value in Server_Rank.items():
             if float(new_badge_count) in value:
                 currentrank = key
@@ -197,17 +219,7 @@ class DataFrameManip:
         await DataFrameManip.sheet_show(0, msg, charname)
         return
 
-    async def addcharacter(self,
-                           msg,
-                           charname,
-                           class_name,
-                           multiclass,
-                           multiname,
-                           username,
-                           currentrank,
-                           badges,
-                           time,
-                           increment=0.0):
+    async def addcharacter(self, msg, charname, class_name, multiclass, multiname, username, currentrank, badges,time, userid, quest='NA',dmname='NA', increment=0.0):
         global df
         series = pd.DataFrame({
             'Character Name': [charname],
@@ -218,7 +230,10 @@ class DataFrameManip:
             'Current Rank': [currentrank],
             'Current Badges': [badges],
             'Time of logging': [time],
-            'Badge Increment': [increment]
+            'Badge Increment': [increment],
+            'User Id': [userid],
+            'Which quest': [quest],
+            'Awarding DM name': [dmname]
         })
         df = pd.concat([df, series], ignore_index=True)
         await DataFrameManip.grant_role(0, msg, currentrank)
@@ -254,6 +269,10 @@ class DataFrameManip:
         em.add_field(name="Last increase of badges:", value=dummy_series[0], inline=False)
         dummy_series = df.iloc[i]['User Name'].values
         em.add_field(name="Character belongs to:", value=dummy_series[0], inline=False)
+        dummy_series = df.iloc[i]['Quest'].values
+        em.add_field(name="Last Quest:", value=dummy_series[0], inline=False)
+        dummy_series = df.iloc[i]['Awarding DM name'].values
+        em.add_field(name="Awarded by:", value=dummy_series[0], inline=False)
         await msg.channel.send(embed=em)
 
     async def check_user_priviledge(self, msg, charname):
@@ -264,7 +283,7 @@ class DataFrameManip:
         dummy_series = df.iloc[i]['User Name'].values
         #await msg.channel.send(dummy_series[0])
         #await msg.channel.send(msg.author)
-        author = str(msg.author)
+        author = str(msg.author.name)
         if author == dummy_series[0]:
             check = 1
         else:
@@ -311,7 +330,8 @@ async def register(ctx):
     msg = await client.wait_for('message', check=check)
     charname = msg.content
     # await ctx.send(charname)
-    username = msg.author
+    username = msg.author.name
+    userid = msg.author.id
     # await ctx.send(username)
     time = msg.created_at
     # await ctx.send(time)
@@ -386,7 +406,7 @@ async def register(ctx):
     if counter != 1:
         rank = 'None'
 
-    await DataFrameManip.addcharacter(0, msg, charname, class_name, multiclass, multiname, username, rank, badges, time)
+    await DataFrameManip.addcharacter(0, msg, charname, class_name, multiclass, multiname, username, rank, badges, time, userid)
 
     @register.error
     async def register_error(ctx, error):
@@ -416,7 +436,7 @@ async def update(ctx):
     if chk == 1:
 
         charname = msg.content
-        username = msg.author
+        username = msg.author.name
         time = msg.created_at
 
         await ctx.send('Enter number of badges to be added:')
@@ -427,7 +447,18 @@ async def update(ctx):
         msg = await client.wait_for('message', check=check)
         increment = abs(float(msg.content))
 
-        await DataFrameManip.dfplayerupdate(0, msg, charname, username, time,
+        await ctx.send('Name of Quest: ')
+        def check(msg):
+            return msg.author == ctx.author and msg.channel == ctx.channel
+        msg = await client.wait_for('message',check=check)
+        quest = msg.content
+
+        await ctx.send('Name of Awarding DM: ')
+        def check(msg):
+            return msg.author == ctx.author and msg.channel == ctx.channel
+        msg = await client.wait_for('message',check=check)
+        dmname = msg.content
+        await DataFrameManip.dfplayerupdate(0, msg, charname, username, time, quest, dmname,
                                             increment)
         await ctx.send('Character updated')
     else:
@@ -459,29 +490,37 @@ async def dmupdate(ctx):
     charname = msg.content
     time = msg.created_at
 
-    await ctx.send('Is character multi-class?', delete_after=20)
+    await ctx.send('Is character multi-class?\n 1: Yes \n 2: No', delete_after=20)
 
     def check(msg):
         return msg.author == ctx.author and msg.channel == ctx.channel
 
     msg = await client.wait_for('message', check=check)
-    multiclass = msg.content
-
-    await ctx.send('Enter secondary classes', delete_after=20)
-
-    def check(msg):
+    if msg.content == 1:
+      multiclass = 'Yes'
+      await ctx.send('Enter secondary classes', delete_after=20)
+      def check(msg):
         return msg.author == ctx.author and msg.channel == ctx.channel
-
-    msg = await client.wait_for('message', check=check)
-    multiname = msg.content
+      msg = await client.wait_for('message', check=check)
+      multiname = msg.content
+    else:
+      multiname='None'
+      multiclass='No'
 
     await ctx.send('Enter Current rank', delete_after=20)
-
+    em = discord.Embed(title=f"Enter Corresponding Number:", description=f"", color=0xFFFFFF)
+    em.add_field(name="Ranks", value=rank_dict , inline=False)
+    await ctx.send(em, delete_after=20)
     def check(msg):
         return msg.author == ctx.author and msg.channel == ctx.channel
 
     msg = await client.wait_for('message', check=check)
-    currentrank = msg.content
+    i = msg.content
+    currentrank = 'Unranked'
+    for keys in rank_dict:
+      if i == keys:
+        currentrank = rank_dict[i].values
+    
 
     await ctx.send('Enter Badge Count', delete_after=20)
 
