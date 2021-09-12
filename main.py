@@ -271,8 +271,8 @@ class DataFrameManip:
             'Note': [note]
         })
         df = pd.concat([df, series], ignore_index=True)
-        await DataFrameManip.grant_role(0, msg, currentrank)
         await DataFrameManip.sheet_show(0, msg, charname)
+        await DataFrameManip.grant_role(0, msg, currentrank)
         return
 
     async def removecharacter(self, charname):
