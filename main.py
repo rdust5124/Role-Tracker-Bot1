@@ -232,11 +232,10 @@ class DataFrameManip:
 
         dummy_string = df.iloc[i]['Current Rank'].values
 
+        await DataFrameManip.sheet_show(0, msg, charname)
         if dummy_string[0] is not currentrank:
             df.loc[i, 'Current Rank'] = currentrank
             await DataFrameManip.grant_role(0, msg, currentrank)
-
-        await DataFrameManip.sheet_show(0, msg, charname)
         return
 
     async def addcharacter(self,
