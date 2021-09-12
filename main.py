@@ -12,11 +12,13 @@ import gspread
 from df2gspread import df2gspread as d2g
 import gspread_dataframe as gd
 from keep_alive import keep_alive
+from discord.ext import tasks
+
 
 __all__ = [
     'discord', 'asyncio', 'pandas', 'commands', 'cooldown', 'BucketType', 'os',
     'bot', 'datetime', 'date', 'ctx', 'get', 'gspread', 'd2g', 'gd',
-    'keep_alive'
+    'keep_alive', 'tasks'
 ]
 
 client = commands.Bot(command_prefix='>', case_insensitive=True)
@@ -25,6 +27,7 @@ client = commands.Bot(command_prefix='>', case_insensitive=True)
 @client.event
 async def on_ready():
     print('Bot is ready')
+    client.loop.create_task(auto_update_sheet())
     #channel = client.get_channel(877880333276704810)
     #await channel.send('hello')
 
@@ -84,7 +87,8 @@ data = {
     'Badge Increment': [],
     'User Id': [],
     'Which quest': [],
-    'Awarding DM name': []
+    'Awarding DM name': [],
+    'Note': []
 }
 
 df = pd.DataFrame(data)
@@ -248,7 +252,8 @@ class DataFrameManip:
                            userid,
                            quest='NA',
                            dmname='NA',
-                           increment=0.0):
+                           increment=0.0,
+                           note='NA'):
         global df
         series = pd.DataFrame({
             'Character Name': [charname],
@@ -262,7 +267,8 @@ class DataFrameManip:
             'Badge Increment': [increment],
             'User Id': [userid],
             'Which quest': [quest],
-            'Awarding DM name': [dmname]
+            'Awarding DM name': [dmname],
+            'Note': [note]
         })
         df = pd.concat([df, series], ignore_index=True)
         await DataFrameManip.grant_role(0, msg, currentrank)
@@ -316,6 +322,8 @@ class DataFrameManip:
         dummy_series = df.iloc[i]['Awarding DM name'].values
         em.add_field(name="Awarded by:", value=dummy_series[0], inline=False)
         await msg.channel.send(embed=em)
+        chnl = client.get_channel(886363637248311337)
+        await chnl.send(embed=em)
 
     async def check_user_priviledge(self, msg, charname):
         global df
@@ -363,6 +371,8 @@ class DataFrameManip:
                      inline=False)
 
         await msg.channel.send(embed=em)
+        chnl = client.get_channel(886363637248311337)
+        await chnl.send(embed=em)
 
     async def grant_role(self, msg, rankname):
         if 'High' in rankname:
@@ -371,18 +381,68 @@ class DataFrameManip:
         await msg.author.add_roles(role)
         return
 
+    async def cancel(self, c):
+        if c == 'C' or c =='c':
+            return 1
+        else:
+            return 0
+
+    async def retrievenote(self, msg, charname):
+        global df
+        i = df[df['Character Name'] == charname].index
+        dummy_series = df.iloc[i]['Note'].values
+        em = discord.Embed(title=f"Character Sheet:",
+                           description=f"",
+                           color=0xFFFFFF)
+        em.add_field(name="Character Name:",
+                     value=charname,
+                     inline=False)
+        em.add_field(name="Note:",
+                     value=dummy_series[0],
+                     inline=False)
+        await msg.channel.send(embed=em)
+        chnl = client.get_channel(886363637248311337)
+        await chnl.send(embed=em)
+        return
+
+    async def editnote(self, charname, note):
+        global df
+        i = df[df['Character Name'] == charname].index
+        df.loc[i, 'Note'] = note
+        return
+
+    async def show_list(self, username):
+        global df
+        dataframe_temp = pd.DataFrame(df.loc[df['User Name'] == username])
+        em = discord.Embed(title=f"Character Sheet:",
+                           description=f"",
+                           color=0xFFFFFF)
+        for i in dataframe_temp.index:
+            dummy_series = df.iloc[i]['Character Name']
+            em.add_field(name="Character Name:",
+                         value=dummy_series,
+                         inline=False)
+        return em
+            
+
+
+
+
+
 
 @client.command()
 @commands.cooldown(1, 30, commands.BucketType.user)
 async def register(ctx):
     if ctx.message.author == client.user:
         return
-    await ctx.send('Enter name of character', delete_after=20)
+    await ctx.send('Enter name of character (Enter c to cancel)', delete_after=20)
 
     def check(msg):
         return msg.author == ctx.author and msg.channel == ctx.channel
-
     msg = await client.wait_for('message', check=check)
+    chk2 = await DataFrameManip.cancel(0, msg.content)
+    if chk2 == 1:
+        return
     charname = msg.content
     # await ctx.send(charname)
     username = msg.author.name
@@ -394,7 +454,7 @@ async def register(ctx):
     em = discord.Embed(
         title=f'Enter corresponding number:',
         description=
-        f'1: Artificer \n 2: Barbarian \n 3: Bard \n 4: Cleric \n 5: Druid \n 6: Fighter \n 7: Monk \n 8: Paladin \n 9: Ranger \n 10: Rogue \n 11: Sorcerer \n 12 : Warlock \n 13: Wizard \n 14: Homebrew',
+        f'1: Artificer \n 2: Barbarian \n 3: Bard \n 4: Cleric \n 5: Druid \n 6: Fighter \n 7: Monk \n 8: Paladin \n 9: Ranger \n 10: Rogue \n 11: Sorcerer \n 12 : Warlock \n 13: Wizard \n 14: Homebrew \n (Enter c to cancel)',
         color=0xFFFFFF)
     await ctx.send(embed=em, delete_after=20)
 
@@ -402,6 +462,10 @@ async def register(ctx):
         return msg.author == ctx.author and msg.channel == ctx.channel
 
     msg = await client.wait_for('message', check=check)
+    chk2 = await DataFrameManip.cancel(0, msg.content)
+    if chk2 == 1:
+        return
+
     if int(msg.content) in Server_Class:
         class_name = Server_Class[int(msg.content)]
     else:
@@ -410,7 +474,7 @@ async def register(ctx):
         # await ctx.send(class_name)
 
     em = discord.Embed(title=f"Multi Classed?",
-                       description=f"1: Yes \n 2: No",
+                       description=f"1: Yes \n 2: No \n (Enter c to cancel)",
                        color=0xFFFFFF)
     await ctx.send(embed=em, delete_after=20)
 
@@ -418,6 +482,9 @@ async def register(ctx):
         return msg.author == ctx.author and msg.channel == ctx.channel
 
     msg = await client.wait_for('message', check=check)
+    chk2 = await DataFrameManip.cancel(0, msg.content)
+    if chk2 == 1:
+        return
     if msg.content == '1' or msg.content == 'Yes':
         multiclass = 'Yes'
     # await ctx.send(multiclass)
@@ -429,24 +496,30 @@ async def register(ctx):
         return
 
     if multiclass == 'Yes':
-        await ctx.send('Enter secondary classes', delete_after=20)
+        await ctx.send('Enter secondary classes (Enter c to cancel)', delete_after=20)
 
         def check(msg):
             return msg.author == ctx.author and msg.channel == ctx.channel
 
         msg = await client.wait_for('message', check=check)
+        chk2 = await DataFrameManip.cancel(0, msg.content)
+        if chk2 == 1:
+            return
         multiname = msg.content
         # await ctx.send(multiname)
     else:
         multiname = 'None'
         # await ctx.send(multiname)
 
-    await ctx.send('Enter Badge Count', delete_after=20)
+    await ctx.send('Enter Badge Count (Enter c to cancel)', delete_after=20)
 
     def check(msg):
         return msg.author == ctx.author and msg.channel == ctx.channel
 
     msg = await client.wait_for('message', check=check)
+    chk2 = await DataFrameManip.cancel(0, msg.content)
+    if chk2 == 1:
+        return
 
     badges = abs(float(msg.content))
     # await ctx.send(badges)
@@ -475,6 +548,8 @@ async def register(ctx):
     await ctx.send("Character Added!")
 
 
+
+
 @client.command()
 @commands.cooldown(1, 30, commands.BucketType.user)
 async def update(ctx):
@@ -482,12 +557,15 @@ async def update(ctx):
         return
     global df
 
-    await ctx.send('Enter name of character')
+    await ctx.send('Enter name of character (Enter c to cancel)')
 
     def check(msg):
         return msg.author == ctx.author and msg.channel == ctx.channel
 
     msg = await client.wait_for('message', check=check)
+    chk2 = await DataFrameManip.cancel(0, msg.content)
+    if chk2 == 1:
+        return
     chk = await DataFrameManip.check_user_priviledge(0, msg, msg.content)
     #await ctx.send(chk)
     if chk == 1:
@@ -496,28 +574,38 @@ async def update(ctx):
         username = msg.author.name
         time = msg.created_at
 
-        await ctx.send('Enter number of badges to be added:')
+        await ctx.send('Enter number of badges to be added:(Enter c to cancel)')
 
         def check(msg):
             return msg.author == ctx.author and msg.channel == ctx.channel
 
         msg = await client.wait_for('message', check=check)
+        chk2 = await DataFrameManip.cancel(0, msg.content)
+        if chk2 == 1:
+            return
         increment = abs(float(msg.content))
 
-        await ctx.send('Name of Quest: ')
+        await ctx.send('Name of Quest: (Enter c to cancel)')
 
         def check(msg):
             return msg.author == ctx.author and msg.channel == ctx.channel
 
         msg = await client.wait_for('message', check=check)
+        chk2 = await DataFrameManip.cancel(0, msg.content)
+        if chk2 == 1:
+            return
         quest = msg.content
 
-        await ctx.send('Name of Awarding DM: ')
+        await ctx.send('Name of Awarding DM: (Enter c to cancel)')
 
         def check(msg):
             return msg.author == ctx.author and msg.channel == ctx.channel
 
+
         msg = await client.wait_for('message', check=check)
+        chk2 = await DataFrameManip.cancel(0, msg.content)
+        if chk2 == 1:
+            return
         dmname = msg.content
         await DataFrameManip.dfplayerupdate(0, msg, charname, username, time,
                                             quest, dmname, increment)
@@ -544,30 +632,39 @@ async def dmupdate(ctx):
 
     if ctx.message.author == client.user:
         return
-    await ctx.send('Enter name of character')
+    await ctx.send('Enter name of character: (Enter c to cancel)')
 
     def check(msg):
         return msg.author == ctx.author and msg.channel == ctx.channel
 
     msg = await client.wait_for('message', check=check)
+    chk2 = await DataFrameManip.cancel(0, msg.content)
+    if chk2 == 1:
+        return
     charname = msg.content
     time = msg.created_at
 
-    await ctx.send('Is character multi-class?\n 1: Yes \n 2: No',
+    await ctx.send('Is character multi-class?\n 1: Yes \n 2: No \n (Enter c to cancel)',
                    delete_after=20)
 
     def check(msg):
         return msg.author == ctx.author and msg.channel == ctx.channel
 
     msg = await client.wait_for('message', check=check)
+    chk2 = await DataFrameManip.cancel(0, msg.content)
+    if chk2 == 1:
+        return
     if msg.content == 1:
         multiclass = 'Yes'
-        await ctx.send('Enter secondary classes', delete_after=20)
+        await ctx.send('Enter secondary classes: (Enter c to cancel)', delete_after=20)
 
         def check(msg):
             return msg.author == ctx.author and msg.channel == ctx.channel
 
         msg = await client.wait_for('message', check=check)
+        chk2 = await DataFrameManip.cancel(0, msg.content)
+        if chk2 == 1:
+            return
         multiname = msg.content
     else:
         multiname = 'None'
@@ -577,7 +674,7 @@ async def dmupdate(ctx):
     em = discord.Embed(
         title=f'Enter Corresponding Number for current rank:',
         description=
-        f'1: Unranked \n 2: Rookie \n 3: Novice \n 4: High Novice \n 5: Apprentice \n 6: High Apprentice \n 7: Adventurer \n 8: High Adventurer \n 9: Journeyman \n 10: High Journeyman \n 11: Veteran \n 12: High Veteran \n 13: Guardian \n 14: High Guardian \n 15: Champion \n 16: High Champion \n 17: Master \n 18: High Master \n 19: Grand Master',
+        f'1: Unranked \n 2: Rookie \n 3: Novice \n 4: High Novice \n 5: Apprentice \n 6: High Apprentice \n 7: Adventurer \n 8: High Adventurer \n 9: Journeyman \n 10: High Journeyman \n 11: Veteran \n 12: High Veteran \n 13: Guardian \n 14: High Guardian \n 15: Champion \n 16: High Champion \n 17: Master \n 18: High Master \n 19: Grand Master \n (Enter c to cancel)',
         color=0xFFFFFF)
     await ctx.send(embed=em, delete_after=20)
 
@@ -585,18 +682,24 @@ async def dmupdate(ctx):
         return msg.author == ctx.author and msg.channel == ctx.channel
 
     msg = await client.wait_for('message', check=check)
+    chk2 = await DataFrameManip.cancel(0, msg.content)
+    if chk2 == 1:
+        return
     i = msg.content
     currentrank = 'Unranked'
     for key, value in rank_dict.items():
         if int(i) == key:
             currentrank = value
 
-    await ctx.send('Enter Badge Count', delete_after=20)
+    await ctx.send('Enter Badge Count: (Enter c to cancel)', delete_after=20)
 
     def check(msg):
         return msg.author == ctx.author and msg.channel == ctx.channel
 
     msg = await client.wait_for('message', check=check)
+    chk2 = await DataFrameManip.cancel(0, msg.content)
+    if chk2 == 1:
+        return
     badges = msg.content
     increment = 0.0
 
@@ -621,26 +724,32 @@ async def dmremove(ctx):
     if ctx.message.author == client.user:
         return
 
-    await ctx.send('Enter name of character')
+    await ctx.send('Enter name of character: (Enter c to cancel)')
 
     def check(msg):
         return msg.author == ctx.author and msg.channel == ctx.channel
 
     msg = await client.wait_for('message', check=check)
+    chk2 = await DataFrameManip.cancel(0, msg.content)
+    if chk2 == 1:
+        return
 
     await ctx.send(
-        'Are you sure you want to delete this record? Type YES to proceed.')
+        'Are you sure you want to delete this record? Type YES to proceed. (Enter c to cancel)')
     await DataFrameManip.dmsheet_show(0, msg, msg.content)
 
     def check(msg):
         return msg.author == ctx.author and msg.channel == ctx.channel
 
     confirm = await client.wait_for('message', check=check)
+    chk2 = await DataFrameManip.cancel(0, msg.content)
+    if chk2 == 1:
+        return
     if confirm.content == 'YES':
         await DataFrameManip.removecharacter(0, msg)
         await ctx.send('Record Deleted')
     else:
-        await ctx.send('Incorrect syntax, deletion cancelled', delete_after=20)
+        await ctx.send('deletion cancelled', delete_after=20)
 
     @dmremove.error
     async def dmremove_error(ctx, error):
@@ -658,12 +767,15 @@ async def show(ctx):
     if ctx.message.author == client.user:
         return
 
-    await ctx.send('Enter name of character')
+    await ctx.send('Enter name of character: (Enter c to cancel)')
 
     def check(msg):
         return msg.author == ctx.author and msg.channel == ctx.channel
 
     msg = await client.wait_for('message', check=check)
+    chk2 = await DataFrameManip.cancel(0, msg.content)
+    if chk2 == 1:
+        return
     chk = await DataFrameManip.check_user_priviledge(0, msg, msg.content)
     # await ctx.send(chk)
     if chk == 1:
@@ -692,12 +804,15 @@ async def dmshow(ctx):
     if ctx.message.author == client.user:
         return
 
-    await ctx.send('Enter name of character')
+    await ctx.send('Enter name of character :(Enter c to cancel)')
 
     def check(msg):
         return msg.author == ctx.author and msg.channel == ctx.channel
 
     msg = await client.wait_for('message', check=check)
+    chk2 = await DataFrameManip.cancel(0, msg.content)
+    if chk2 == 1:
+        return
     await DataFrameManip.dmsheet_show(0, msg, msg.content)
 
     @dmshow.error
@@ -721,7 +836,6 @@ async def usheet(ctx):
         worksheet_temp = rank_sheet.worksheet(values)
         dataframe_temp = pd.DataFrame(df.loc[df['Main class'] == values])
         #d2g.upload(dataframe_temp,  spreadsheet_key, values, credentials=credentials, row_names=True)
-        worksheet_temp.clear()
         gd.set_with_dataframe(worksheet=worksheet_temp,
                               dataframe=dataframe_temp,
                               include_index=False,
@@ -730,10 +844,96 @@ async def usheet(ctx):
         #print(dataframe_temp)
     await ctx.send("Sheet Updated!")
 
+
+@client.command()
+@commands.cooldown(1, 10, commands.BucketType.user)
+@commands.has_any_role("DM - West March", "Trial DM - West March",
+                       "Head DM - West March", "Owner", "Administrator",
+                       "Moderator", "DM - Campaigns")
+async def dmshownote(ctx):
+    if ctx.message.author == client.user:
+        return
+
+    await ctx.send('Enter name of character :(Enter c to cancel)')
+
+    def check(msg):
+        return msg.author == ctx.author and msg.channel == ctx.channel
+
+    msg = await client.wait_for('message', check=check)
+    chk2 = await DataFrameManip.cancel(0, msg.content)
+    if chk2 == 1:
+        return
+    charname = msg.content
+    await DataFrameManip.retrievenote(0, msg, charname)
+
+
+@client.command()
+@commands.has_any_role("DM - West March", "Trial DM - West March",
+                       "Head DM - West March", "Owner", "Administrator",
+                       "Moderator", "DM - Campaigns")
+async def dmeditnote(ctx):
+    if ctx.message.author == client.user:
+        return
+
+    await ctx.send('Enter name of character :(Enter c to cancel)')
+
+    def check(msg):
+        return msg.author == ctx.author and msg.channel == ctx.channel
+
+    msg = await client.wait_for('message', check=check)
+    chk2 = await DataFrameManip.cancel(0, msg.content)
+    if chk2 == 1:
+        return
+    charname = msg.content
+    await ctx.send('Enter Note :(Enter c to cancel)')
+
+    def check(msg):
+        return msg.author == ctx.author and msg.channel == ctx.channel
+
+    msg = await client.wait_for('message', check=check)
+    chk2 = await DataFrameManip.cancel(0, msg.content)
+    if chk2 == 1:
+        return
+    note = msg.content
+    await DataFrameManip.editnote(0, charname, note)
+    await DataFrameManip.retrievenote(0, msg, charname)
+    return
+
+
+@client.command()
+@commands.cooldown(1, 30, commands.BucketType.user)
+async def list(ctx):
+    if ctx.message.author == client.user:
+        return
+    username = ctx.message.author.name
+    em = await DataFrameManip.show_list(0, username)
+    await ctx.send(embed=em)
+    return
+
+
 @client.command()
 async def bot_help(ctx):
   em=discord.Embed(title=f'To use this Bot:',description=f'To register a new character, type >register and follow instructions. \n To view an existing character sheet, type >show and follow instructions.  \n To  update your badge count, type >update and follow instructions', color=0xFFFFFF)
   await ctx.send(embed=em)
+  return
+
+
+
+
+async def auto_update_sheet():
+  await client.wait_until_ready()
+  global df
+  channel = client.get_channel(855635196162342923)
+  while not client.is_closed():
+    for key, values in Server_Class.items():
+      worksheet_temp = rank_sheet.worksheet(values)
+      dataframe_temp = pd.DataFrame(df.loc[df['Main class'] == values])
+      #d2g.upload(dataframe_temp,  spreadsheet_key, values, credentials=credentials, row_names=True)
+      gd.set_with_dataframe(worksheet=worksheet_temp,dataframe=dataframe_temp,include_index=False,include_column_header=True,resize=True)
+    await channel.send("Sheet Updated!")
+    await asyncio.sleep(600)
+
+
 
 
 my_secret11 = os.environ['TOKEN']
