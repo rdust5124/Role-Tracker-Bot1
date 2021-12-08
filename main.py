@@ -282,11 +282,7 @@ class DataFrameManip:
 
     async def dmsheet_show(self, msg, charname):
         global df
-        i = "NULL"
         i = df[df['Character Name'] == charname].index
-        if i is "NULL":
-          await msg.send('No match found, check for typos or spelling errors', delete_after=20)
-          return
         dummy_series = []
         em = discord.Embed(title=f"Character Sheet:",
                            description=f"",
@@ -346,11 +342,7 @@ class DataFrameManip:
 
     async def sheet_show(self, msg, charname):
         global df
-        i = "NULL"
         i = df[df['Character Name'] == charname].index
-        if i is "NULL":
-          await msg.send('No match found, check for typos or spelling errors', delete_after=20)
-          return
         em = discord.Embed(title=f"Character Sheet:",
                            description=f"",
                            color=0xFFFFFF)
@@ -628,6 +620,8 @@ async def update(ctx):
             await ctx.send('Wait for {error.retry_after:.2f}', delete_after=20)
         if isinstance(error, commands.errors.BadArgument):
             await ctx.send('Bad input', delete_after=20)
+        if isinstance(error, commands.errors.CommandInvokeError):
+            await ctx.send('No matching records found, check for spelling errors', delete_after=20)
 
 
 @client.command()
@@ -721,6 +715,8 @@ async def dmupdate(ctx):
             await ctx.send('Wait for {error.retry_after:.2f}', delete_after=20)
         if isinstance(error, commands.errors.BadArgument):
             await ctx.send('Bad input', delete_after=20)
+        if isinstance(error, commands.errors.CommandInvokeError):
+            await ctx.send('No matching records found, check for spelling errors', delete_after=20)
 
 
 @client.command()
@@ -767,7 +763,8 @@ async def dmremove(ctx):
             await ctx.send('Wait for {error.retry_after:.2f}', delete_after=20)
         if isinstance(error, commands.errors.BadArgument):
             await ctx.send('Bad input', delete_after=20)
-
+        if isinstance(error, commands.errors.CommandInvokeError):
+            await ctx.send('No matching records found, check for spelling errors', delete_after=20)
 
 @client.command()
 @commands.cooldown(1, 30, commands.BucketType.user)
@@ -802,7 +799,8 @@ async def show(ctx):
             await ctx.send('Wait for {error.retry_after:.2f}', delete_after=20)
         if isinstance(error, commands.errors.BadArgument):
             await ctx.send('Bad input', delete_after=20)
-
+        if isinstance(error, commands.errors.CommandInvokeError):
+            await ctx.send('No matching records found, check for spelling errors', delete_after=20)
 
 @client.command()
 @commands.cooldown(1, 5, commands.BucketType.user)
