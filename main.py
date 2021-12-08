@@ -282,7 +282,11 @@ class DataFrameManip:
 
     async def dmsheet_show(self, msg, charname):
         global df
+        i = "NULL"
         i = df[df['Character Name'] == charname].index
+        if i is "NULL":
+          await msg.send('No match found, check for typos or spelling errors', delete_after=20)
+          return
         dummy_series = []
         em = discord.Embed(title=f"Character Sheet:",
                            description=f"",
@@ -342,7 +346,11 @@ class DataFrameManip:
 
     async def sheet_show(self, msg, charname):
         global df
+        i = "NULL"
         i = df[df['Character Name'] == charname].index
+        if i is "NULL":
+          await msg.send('No match found, check for typos or spelling errors', delete_after=20)
+          return
         em = discord.Embed(title=f"Character Sheet:",
                            description=f"",
                            color=0xFFFFFF)
@@ -556,7 +564,7 @@ async def update(ctx):
         return
     global df
 
-    await ctx.send('Enter name of character (Enter c to cancel)')
+    await ctx.send('Enter name of character (Enter c to cancel)', delete_after=20)
 
     def check(msg):
         return msg.author == ctx.author and msg.channel == ctx.channel
@@ -564,6 +572,7 @@ async def update(ctx):
     msg = await client.wait_for('message', check=check)
     chk2 = await DataFrameManip.cancel(0, msg.content)
     if chk2 == 1:
+        await ctx.send('No matching record found, check for typo or spelling errors', delete_after=20)
         return
     chk = await DataFrameManip.check_user_priviledge(0, msg, msg.content)
     #await ctx.send(chk)
@@ -573,7 +582,7 @@ async def update(ctx):
         username = msg.author.name
         time = msg.created_at
 
-        await ctx.send('Enter number of badges to be added:(Enter c to cancel)')
+        await ctx.send('Enter number of badges to be added:(Enter c to cancel)', delete_after=20)
 
         def check(msg):
             return msg.author == ctx.author and msg.channel == ctx.channel
@@ -584,7 +593,7 @@ async def update(ctx):
             return
         increment = abs(float(msg.content))
 
-        await ctx.send('Name of Quest: (Enter c to cancel)')
+        await ctx.send('Name of Quest: (Enter c to cancel)', delete_after=20)
 
         def check(msg):
             return msg.author == ctx.author and msg.channel == ctx.channel
@@ -595,7 +604,7 @@ async def update(ctx):
             return
         quest = msg.content
 
-        await ctx.send('Name of Awarding DM: (Enter c to cancel)')
+        await ctx.send('Name of Awarding DM: (Enter c to cancel)', delete_after=20)
 
         def check(msg):
             return msg.author == ctx.author and msg.channel == ctx.channel
@@ -639,6 +648,7 @@ async def dmupdate(ctx):
     msg = await client.wait_for('message', check=check)
     chk2 = await DataFrameManip.cancel(0, msg.content)
     if chk2 == 1:
+        await ctx.send('No matching record found, check for typo or spelling errors', delete_after=20)
         return
     charname = msg.content
     time = msg.created_at
@@ -731,6 +741,7 @@ async def dmremove(ctx):
     msg = await client.wait_for('message', check=check)
     chk2 = await DataFrameManip.cancel(0, msg.content)
     if chk2 == 1:
+        await ctx.send('No matching record found, check for typo or spelling errors', delete_after=20)
         return
 
     await ctx.send(
@@ -774,6 +785,7 @@ async def show(ctx):
     msg = await client.wait_for('message', check=check)
     chk2 = await DataFrameManip.cancel(0, msg.content)
     if chk2 == 1:
+        await ctx.send('No matching record found, check for typo or spelling errors', delete_after=20)
         return
     chk = await DataFrameManip.check_user_priviledge(0, msg, msg.content)
     # await ctx.send(chk)
@@ -811,6 +823,7 @@ async def dmshow(ctx):
     msg = await client.wait_for('message', check=check)
     chk2 = await DataFrameManip.cancel(0, msg.content)
     if chk2 == 1:
+        await ctx.send('No matching record found, check for typo or spelling errors', delete_after=20)
         return
     await DataFrameManip.dmsheet_show(0, msg, msg.content)
 
@@ -930,7 +943,7 @@ async def auto_update_sheet():
       #d2g.upload(dataframe_temp,  spreadsheet_key, values, credentials=credentials, row_names=True)
       gd.set_with_dataframe(worksheet=worksheet_temp,dataframe=dataframe_temp,include_index=False,include_column_header=True,resize=True)
     await channel.send("Sheet Updated!")
-    await asyncio.sleep(600)
+    await asyncio.sleep(300)
 
 
 
