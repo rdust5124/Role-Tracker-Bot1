@@ -198,6 +198,9 @@ class DataFrameManip:
                          currentrank, badges, time, increment):
         global df
         i = df[df['Character Name'] == charname].index
+        if i.size == 0:
+            await msg.channel.send('No matching records found, check for spelling errors', delete_after=20)
+            return
         df.loc[i, 'Multi_Class'] = multiclass
         df.loc[i, 'Multi-Class Names'] = multiname
         df.loc[i, 'Current Rank'] = currentrank
@@ -212,6 +215,9 @@ class DataFrameManip:
         global df
         global Server_Rank
         i = df[df['Character Name'] == charname].index
+        if i.size == 0:
+            await msg.channel.send('No matching records found, check for spelling errors', delete_after=20)
+            return
         badges = df.iloc[i]['Current Badges']
         float(badges)
         float(increment)
@@ -283,6 +289,9 @@ class DataFrameManip:
     async def dmsheet_show(self, msg, charname):
         global df
         i = df[df['Character Name'] == charname].index
+        if i.size == 0:
+            await msg.channel.send('No matching records found, check for spelling errors', delete_after=20)
+            return
         dummy_series = []
         em = discord.Embed(title=f"Character Sheet:",
                            description=f"",
@@ -327,6 +336,10 @@ class DataFrameManip:
     async def check_user_priviledge(self, msg, charname):
         global df
         i = df[df['Character Name'] == charname].index
+        if i.size == 0:
+            await msg.channel.send('No matching records found, check for spelling errors', delete_after=20)
+            check = 2
+            return check
         # await msg.channel.send(df)
         # await msg.channel.send(df.iloc[i][ 'User Name'])
         dummy_series = df.iloc[i]['User Name'].values
@@ -343,6 +356,9 @@ class DataFrameManip:
     async def sheet_show(self, msg, charname):
         global df
         i = df[df['Character Name'] == charname].index
+        if i.size == 0:
+            await msg.channel.send('No matching records found, check for spelling errors', delete_after=20)
+            return
         em = discord.Embed(title=f"Character Sheet:",
                            description=f"",
                            color=0xFFFFFF)
@@ -389,6 +405,9 @@ class DataFrameManip:
     async def retrievenote(self, msg, charname):
         global df
         i = df[df['Character Name'] == charname].index
+        if i.size == 0:
+            await msg.channel.send('No matching records found, check for spelling errors', delete_after=20)
+            return
         dummy_series = df.iloc[i]['Note'].values
         em = discord.Embed(title=f"Character Sheet:",
                            description=f"",
@@ -610,6 +629,8 @@ async def update(ctx):
         await DataFrameManip.dfplayerupdate(0, msg, charname, username, time,
                                             quest, dmname, increment)
         await ctx.send('Character updated')
+    elif chk == 2:
+        await message.channel.send('No matching records found, check for spelling errors', delete_after=20)
     else:
         await ctx.send('This character does not belong to you',
                        delete_after=20)
@@ -788,6 +809,8 @@ async def show(ctx):
     # await ctx.send(chk)
     if chk == 1:
         await DataFrameManip.sheet_show(0, msg, msg.content)
+    elif chk == 2:
+        return
     else:
         await ctx.send('This character does not belong to you',
                        delete_after=20)
