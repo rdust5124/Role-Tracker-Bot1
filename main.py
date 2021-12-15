@@ -964,7 +964,7 @@ async def auto_update_sheet():
       #d2g.upload(dataframe_temp,  spreadsheet_key, values, credentials=credentials, row_names=True)
       gd.set_with_dataframe(worksheet=worksheet_temp,dataframe=dataframe_temp,include_index=False,include_column_header=True,resize=True)
     await channel.send("Sheet Updated!")
-    await asyncio.sleep(300)
+    await asyncio.sleep(600)
 
 
 
